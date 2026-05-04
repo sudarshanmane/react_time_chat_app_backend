@@ -1,6 +1,6 @@
 import { ZodError } from "zod";
 import mongoose from "mongoose";
-import { AppError } from "../common/error.js";
+import { AppError } from "../utils/error.js";
 
 export const errorMiddleware = (err, req, res, next) => {
   if (err instanceof AppError) {
