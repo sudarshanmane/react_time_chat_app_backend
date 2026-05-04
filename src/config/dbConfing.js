@@ -3,7 +3,6 @@ import { MONGO_URL } from "./envConfig.js";
 
 export const connectDB = async () => {
   try {
-    console.log(MONGO_URL);
     return await mongoose.connect(MONGO_URL);
   } catch (error) {
     console.log(error);

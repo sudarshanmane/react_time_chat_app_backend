@@ -1,6 +1,8 @@
-import express from "express";
+import { Router } from "express";
+import authRoutes from "../modules/auth/routes.js";
 
-let app = express();
-let router = app.Router();
+const routes = Router();
 
-router.use("/");
+routes.use("/auth", authRoutes);
+
+export default routes;
