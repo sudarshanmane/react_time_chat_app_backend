@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { AppError } from "../utils/error.js";
 
 export const errorMiddleware = (err, req, res, next) => {
+  console.error(err);
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       success: false,
