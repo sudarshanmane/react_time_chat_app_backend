@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { sendErrorResponse } from "../utils/sendResponse.js";
 import { JWT_SECRET } from "../../config/envConfig.js";
-import { User } from "../../schemas/userSchema.js";
+import { getActiveUserFromToken } from "../utils/authToken.js";
 
 export const generateToken = (userId) => {
   let token = jwt.sign({ userId }, JWT_SECRET, {
@@ -14,24 +14,10 @@ export const generateToken = (userId) => {
 export const verifyToken = async (req, res, next) => {
   try {
     let token = req.headers.authorization?.replace("Bearer ", "");
-    if (!token) {
-      return sendErrorResponse(res, 401, "Unauthorized");
-    }
+    const { userId } = await getActiveUserFromToken(token);
 
-    let decoded = jwt.verify(token, JWT_SECRET);
-
-    if (decoded) {
-      req.userId = decoded.userId;
-
-      let user = await User.findById(req.userId);
-      if (!user || user.status !== "active") {
-        return sendErrorResponse(res, 401, "Unauthorized");
-      }
-
-      next();
-    } else {
-      return sendErrorResponse(res, 401, "Invalid token");
-    }
+    req.userId = userId;
+    next();
   } catch (error) {
     return sendErrorResponse(res, 401, "Invalid token");
   }

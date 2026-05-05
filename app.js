@@ -16,14 +16,7 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
-app.use(
-  "/api",
-  (req, _res, next) => {
-    console.log(req.originalUrl);
-    next();
-  },
-  routes,
-);
+app.use("/api", routes);
 
 app.use("/", (req, res) => {
   throw new AppError("Path not found!", 400);

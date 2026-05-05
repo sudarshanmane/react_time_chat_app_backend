@@ -21,4 +21,7 @@ const chatSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+chatSchema.index({ participants: 1, updatedAt: -1 });
+chatSchema.index({ isGroup: 1, participants: 1 });
+
 export const Chat = mongoose.model("Chat", chatSchema);

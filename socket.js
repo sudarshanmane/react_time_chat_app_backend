@@ -1,8 +1,7 @@
 import { Server } from "socket.io";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "./src/config/envConfig.js";
+import { getActiveUserFromToken } from "./src/common/utils/authToken.js";
+import { getChatForUserService } from "./src/modules/chat/chat.service.js";
 import { createMessageService } from "./src/modules/message/message.service.js";
-import { User } from "./src/schemas/userSchema.js";
 
 export const initSocket = (server) => {
   const io = new Server(server, {
@@ -12,19 +11,10 @@ export const initSocket = (server) => {
   io.use(async (socket, next) => {
     try {
       const token = socket.handshake.auth.token;
+      const { user, userId } = await getActiveUserFromToken(token);
 
-      if (!token) {
-        return next(new Error("Unauthorized"));
-      }
-
-      const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await User.findById(decoded.userId);
-
-      if (!user || user.status !== "active") {
-        return next(new Error("Unauthorized"));
-      }
-
-      socket.userId = decoded.userId;
+      socket.userId = userId;
+      socket.userName = user.name;
       next();
     } catch (_error) {
       next(new Error("Invalid token"));
@@ -32,27 +22,50 @@ export const initSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.userId);
+    socket.on("join", async (chatId, callback) => {
+      try {
+        await getChatForUserService(chatId, socket.userId);
 
-    socket.on("join", (chatId) => {
-      socket.join(chatId);
+        socket.join(chatId);
+        callback?.({ success: true });
+      } catch (error) {
+        callback?.({
+          success: false,
+          message: error.message || "Could not join chat",
+        });
+      }
     });
 
-    socket.on("typing", (chatId) => {
-      socket.to(chatId).emit("typing");
+    socket.on("typing", async (chatId, callback) => {
+      try {
+        await getChatForUserService(chatId, socket.userId);
+
+        socket.to(chatId).emit("typing", {
+          chatId,
+          userId: socket.userId,
+          name: socket.userName,
+        });
+        callback?.({ success: true });
+      } catch (error) {
+        callback?.({
+          success: false,
+          message: error.message || "Could not send typing event",
+        });
+      }
     });
 
-    socket.on("message:send", async (data) => {
-      const newMessage = await createMessageService({
-        ...data,
-        senderId: socket.userId,
-      });
+    socket.on("message:send", async (data, callback) => {
+      try {
+        const newMessage = await createMessageService(data, socket.userId);
 
-      io.to(data.chatId).emit("message:receive", newMessage);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Disconnected");
+        io.to(data.chatId).emit("message:receive", newMessage);
+        callback?.({ success: true, data: newMessage });
+      } catch (error) {
+        callback?.({
+          success: false,
+          message: error.message || "Message could not be sent",
+        });
+      }
     });
   });
 

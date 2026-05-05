@@ -6,10 +6,7 @@ import {
 } from "./message.service.js";
 
 export const createMessageController = catchAsync(async (req, res) => {
-  const message = await createMessageService({
-    ...req.body,
-    senderId: req.userId,
-  });
+  const message = await createMessageService(req.body, req.userId);
 
   return sendSuccessReponse(
     res,
@@ -20,8 +17,8 @@ export const createMessageController = catchAsync(async (req, res) => {
 });
 
 export const getMessagecontroller = catchAsync(async (req, res) => {
-  let chatId = req.params.chatId;
-  const messages = await getMessageService(chatId);
+  const chatId = req.params.chatId;
+  const messages = await getMessageService(chatId, req.userId);
 
   return sendSuccessReponse(
     res,

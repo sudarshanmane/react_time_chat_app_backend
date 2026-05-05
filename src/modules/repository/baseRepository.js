@@ -22,6 +22,14 @@ export const baseRepository = {
       dbQuery = dbQuery.sort(options.sort);
     }
 
+    if (options.select) {
+      dbQuery = dbQuery.select(options.select);
+    }
+
+    if (options.limit) {
+      dbQuery = dbQuery.limit(options.limit);
+    }
+
     return dbQuery;
   },
   async updateOne(query = {}, data) {

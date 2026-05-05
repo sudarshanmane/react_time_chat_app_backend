@@ -14,7 +14,7 @@ export const loginUserService = async (user) => {
 
   if (!existingUser) {
     throw new AppError("Invalid credentials!", 400);
-  }
+  } 
 
   let isMatch = await comparePassword(user.password, existingUser.password);
 
